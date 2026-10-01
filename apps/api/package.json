@@ -10,6 +10,7 @@
     "db:migrate": "uv run alembic upgrade head",
     "db:generate": "uv run alembic revision --autogenerate",
     "db:rollback": "uv run alembic downgrade -1",
-    "db:history": "uv run alembic history"
+    "db:history": "uv run alembic history",
+    "db:seed": "uv run python -m src.db.seeds"
   }
 }
