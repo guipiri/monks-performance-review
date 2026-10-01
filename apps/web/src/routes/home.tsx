@@ -48,10 +48,10 @@ function Home() {
               Avaliações
             </h2>
             <p className="text-sm text-neutral-600 mt-1">
-              Visualize todas as avaliações de desempenho dos seus subordinados diretos e indiretos, feitas por você ou por outros líderes.
+              Visualize todas as avaliações de desempenho dos seus subordinados
+              diretos e indiretos, feitas por você ou por outros líderes.
             </p>
           </Link>
-
         </div>
       </div>
     </div>
@@ -59,4 +59,3 @@ function Home() {
 }
 
 export default Home;
-
