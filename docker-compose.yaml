@@ -1,0 +1,14 @@
+services:
+  database:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=monks-performance-review
+    ports:
+      - "5432:5432"
+    volumes:
+      - monks-performance-review-database:/var/lib/postgresql/data
+
+volumes:
+  monks-performance-review-database:
