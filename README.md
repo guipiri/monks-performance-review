@@ -1,159 +1,223 @@
-# Turborepo starter
+# Monks Performance Review
 
-This Turborepo starter is maintained by the Turborepo core team.
+Sistema para Avaliação de Desempenho profissional desenvolvido com arquitetura Monorepo, integrando frontend SPA em **React 19** e backend em **FastAPI (Python)** com **PostgreSQL**.
 
-## Using this example
+---
 
-Run the following command:
+## Arquitetura e Fluxo do Sistema
 
-```sh
-npx create-turbo@latest
+### Visão Geral da Arquitetura
+
+```mermaid
+graph TD
+    subgraph Monorepo ["Monorepo"]
+        subgraph Web ["apps/web (Frontend)"]
+            React["React 19 + TypeScript"]
+            Vite["Vite Bundler"]
+            Tailwind["Tailwind CSS"]
+            TanStack["TanStack Query (Cache & State)"]
+            Axios["Axios (HTTP + Interceptor JWT)"]
+        end
+
+        subgraph API ["apps/api (Backend)"]
+            FastAPI["FastAPI (Python 3.12+)"]
+            Uvicorn["Uvicorn ASGI Server"]
+            SQLAlchemy["SQLAlchemy 2.0 ORM"]
+            Alembic["Alembic (Database Migrations)"]
+            Security["Auth JWT (Argon2 / Bcrypt)"]
+        end
+
+        subgraph Infra ["Infraestrutura Local"]
+            Postgres[("PostgreSQL 16 (Docker)")]
+        end
+    end
+
+    User(["👤 Usuário / Líder / Colaborador"]) -->|Navegador| Web
+    Web -->|Requisições REST / Bearer Token| API
+    API -->|Consultas e Persistência| Postgres
 ```
 
-## What's inside?
+---
 
-This Turborepo includes the following packages/apps:
+### Fluxo de Autenticação e Avaliação
 
-### Apps and Packages
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Usuário (Líder/Colaborador)
+    participant Web as Frontend (React/Vite)
+    participant API as Backend (FastAPI)
+    participant DB as PostgreSQL
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `@next/eslint-plugin-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+    Note over User,DB: 1. Fluxo de Autenticação
+    User->>Web: Informa e-mail e senha
+    Web->>API: POST /api/v1/auth/login (OAuth2 Password Data)
+    API->>DB: Valida credenciais e hash de senha
+    DB-->>API: Usuário autenticado
+    API-->>Web: Retorna JWT Token
+    Web->>Web: Armazena token e redireciona
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+    Note over User,DB: 2. Listagem de Liderados & Histórico
+    User->>Web: Acessa Dashboard / Avaliações
+    Web->>API: GET /api/v1/users/me/leads (com Header Bearer Token)
+    API->>DB: Busca liderados vinculados ao usuário logado
+    DB-->>API: Lista de colaboradores
+    API-->>Web: Resposta JSON
+    Web-->>User: Exibe cartões dos liderados
 
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+    Note over User,DB: 3. Submissão de Avaliação Ponderada
+    User->>Web: Preenche notas (1-4) nos 6 critérios e envia
+    Web->>API: POST /api/v1/evaluations
+    API->>API: Calcula nota final ponderada (Pesos 25, 20, 20, 15, 10, 10)
+    API->>DB: Persiste registro de avaliação
+    DB-->>API: Confirmação
+    API-->>Web: Avaliação registrada com sucesso
+    Web-->>User: Feedback visual & atualização da listagem
 ```
 
-Without global `turbo`, use your package manager:
+---
 
-```sh
-cd my-turborepo
-npx turbo build
-yarn exec turbo build
-yarn exec turbo build
+## Critérios de Avaliação Ponderada
+
+O cálculo da nota final que vai de 0 a 4 considera 6 pilares de competências com pesos distribuídos:
+
+| Critério | Descrição | Peso |
+| :--- | :--- | :---: |
+| **Entrega de Resultados** | Capacidade de atingir metas com consistência e impacto. | **25%** |
+| **Execução e Qualidade** | Excelência técnica, atenção a detalhes e boas práticas. | **20%** |
+| **Aprendizado e Desenvolvimento** | Curiosidade, adaptabilidade e absorção de novos conhecimentos. | **20%** |
+| **Resolução de Problemas** | Pensamento crítico para solucionar problemas. | **15%** |
+| **Colaboração e Liderança** | Trabalho em equipe, comunicação e suporte aos pares. | **10%** |
+| **Visão Estratégica** | Entendimento do negócio e potencial de crescimento. | **10%** |
+
+---
+
+## Pré-requisitos
+
+Certifique-se de possuir instalado em seu ambiente:
+
+- **Node.js**: `>= 24.0.0`
+- **Yarn**: `1.22.x` (ou via Corepack)
+- **Python**: `>= 3.12`
+- **uv** (gerenciador ultrarrápido de pacotes Python): [Instalação do uv](https://docs.astral.sh/uv/)
+- **Docker** e **Docker Compose**: para execução do banco PostgreSQL local.
+
+---
+
+## Instruções de Setup
+
+### i. Como Instalar as Dependências
+
+Na raiz do projeto, instale as dependências de todo o monorepo (Node e Python):
+
+```bash
+# 1. Instalar dependências JavaScript/TypeScript no monorepo
+yarn install
+
+# 2. Instalar dependências Python no backend (apps/api)
+cd apps/api
+uv sync
+cd ../..
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+---
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+### ii. Onde Colocar as Chaves e Variáveis de Ambiente
 
-```sh
-turbo build --filter=docs
+Localmente, não é necessário criar variáveis de ambiente pois o projeto possui configurações pré-definidas. Mas você pode customizar os arquivos `.env` caso deseje:
+
+#### 1. Backend (`apps/api/.env`)
+Crie ou edite o arquivo `apps/api/.env` (um template está disponível em `apps/api/.env.example`):
+
+```env
+# Banco de Dados PostgreSQL
+DATABASE_URL=postgresql+psycopg://admin:admin@localhost:5432/monks-performance-review
+
+# Segurança & Autenticação JWT
+SECRET_KEY=super-secret-key-change-in-production-1234567890
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=1440
+
+# Configurações Gerais da API
+PROJECT_NAME="Monks Performance Review API"
+API_V1_STR=/api/v1
 ```
 
-Without global `turbo`:
+#### 2. Frontend (`apps/web/.env`)
+Crie ou edite o arquivo `apps/web/.env` (um template está disponível em `apps/web/.env.example`):
 
-```sh
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-yarn exec turbo build --filter=docs
+```env
+# URL base da API FastAPI
+VITE_API_URL=http://localhost:8000/api/v1
 ```
 
-### Develop
+---
 
-To develop all apps and packages, run the following command:
+### iii. Execução Passo a Passo
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+Siga o passo a passo abaixo para inicializar o banco de dados, aplicar as migrações, popular dados iniciais e rodar os servidores:
 
-```sh
-cd my-turborepo
-turbo dev
+#### Passo 1: Iniciar o Banco de Dados (PostgreSQL)
+Inicie o container PostgreSQL em segundo plano:
+
+```bash
+docker compose up -d database
 ```
 
-Without global `turbo`, use your package manager:
+> O banco de dados estará acessível em `localhost:5432` com usuário `admin` e banco `monks-performance-review`.
 
-```sh
-cd my-turborepo
-npx turbo dev
-yarn exec turbo dev
-yarn exec turbo dev
+#### Passo 2: Executar as Migrações do Banco
+Rode as migrações via Alembic para criar todas as tabelas:
+
+```bash
+# A partir da raiz:
+yarn --cwd apps/api db:migrate
+
+# Ou diretamente dentro de apps/api:
+# cd apps/api && uv run alembic upgrade head
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+#### Passo 3: Popular o Banco de Dados (Seeds)
+Execute o script de seed para criar usuários, estrutura organizacional e relações de liderança:
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+```bash
+# A partir da raiz:
+yarn --cwd apps/api db:seed
 
-```sh
-turbo dev --filter=web
+# Ou diretamente dentro de apps/api:
+# cd apps/api && uv run python -m src.db.seeds
 ```
 
-Without global `turbo`:
+#### Passo 4: Iniciar a Aplicação em Desenvolvimento
+Execute o comando de inicialização unificada na raiz do projeto:
 
-```sh
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-yarn exec turbo dev --filter=web
+```bash
+yarn dev
 ```
 
-### Remote Caching
+O **Turborepo** iniciará simultaneamente:
+- **Frontend (Web)**: [http://localhost:5173](http://localhost:5173)
+- **Backend (API)**: [http://localhost:8000](http://localhost:8000)
+- **Documentação Swagger/OpenAPI**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+---
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+## 🔑 Credenciais para Teste (Seed Data)
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+Após rodar o script `db:seed`, todos os usuários de exemplo compartilham a mesma senha padrão:
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+- **Senha Padrão**: `password123`
 
-```sh
-cd my-turborepo
-turbo login
-```
+### Exemplos de Usuários Pré-configurados:
 
-Without global `turbo`, use your package manager:
+| Usuário | E-mail | Cargo | Liderados |
+| :--- | :--- | :--- | :--- |
+| **Bob Sinclair** | `bob.sinclair@company.com` | CTO | David Okafor, Eva Müller, Frank Rossi, Grace Kim, etc. |
+| **David Okafor** | `david.okafor@company.com` | Engineering Manager | Henry Patel, Leo Vance |
+| **Eva Müller** | `eva.muller@company.com` | Engineering Manager | Isabelle Dubois, Maria Santos, Noah Taylor |
+| **Carol Nguyen** | `carol.nguyen@company.com` | CFO | Rachel Green, Samuel Adams |
+| **Frank Rossi** | `frank.rossi@company.com` | Product Manager | Olivia Brown |
 
-```sh
-cd my-turborepo
-npx turbo login
-yarn exec turbo login
-yarn exec turbo login
-```
+> **Dica**: Acesse com `bob.sinclair@company.com` para gerenciar e avaliar múltiplos líderes e membros de equipe.
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-yarn exec turbo link
-yarn exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+---
