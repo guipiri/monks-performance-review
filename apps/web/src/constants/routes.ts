@@ -1,5 +1,6 @@
 import Home from "../routes/home";
 import Login from "../routes/login";
+import EvaluationsGiven from "../routes/evaluations-given";
 
 export interface Route {
   path: string;
@@ -21,4 +22,11 @@ export const routes = {
     key: "home",
     isPrivate: true,
   },
+  evaluationsGiven: {
+    path: "/evaluations/given",
+    element: EvaluationsGiven,
+    key: "evaluationsGiven",
+    isPrivate: true,
+  },
 } as const satisfies Record<string, Route>;
+

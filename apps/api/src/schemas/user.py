@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr
 
@@ -6,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr
 class UserBase(BaseModel):
     email: EmailStr
     name: str
+    position_name: Optional[str] = None
 
 
 class UserLogin(BaseModel):
