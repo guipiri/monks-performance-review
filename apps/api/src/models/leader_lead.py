@@ -21,4 +21,3 @@ class LeaderLead(Base):
 
     leader: Mapped["User"] = relationship("User", foreign_keys=[leader_id])
     lead: Mapped["User"] = relationship("User", foreign_keys=[lead_id])
-
