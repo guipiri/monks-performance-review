@@ -1,5 +1,9 @@
 import { httpClient } from "../http/client";
-import type { EvaluationItem, SubordinateItem } from "../types/evaluation";
+import type {
+  CreateEvaluationPayload,
+  EvaluationItem,
+  SubordinateItem,
+} from "../types/evaluation";
 
 export interface GetEvaluationsParams {
   evaluatedId?: number;
@@ -31,3 +35,14 @@ export async function getSubordinates(): Promise<SubordinateItem[]> {
   );
   return response.data;
 }
+
+export async function createEvaluation(
+  payload: CreateEvaluationPayload,
+): Promise<EvaluationItem> {
+  const response = await httpClient.post<EvaluationItem>(
+    "/evaluations",
+    payload,
+  );
+  return response.data;
+}
+

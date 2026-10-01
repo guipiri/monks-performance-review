@@ -32,11 +32,14 @@ export interface SubordinateItem {
   last_evaluation_date?: string | null;
 }
 
-export interface CriterionMetadata {
-  key: string;
-  title: string;
-  weight: number;
-  description: string;
-  min_score: number;
-  max_score: number;
+export interface CreateEvaluationPayload {
+  evaluated_id: number;
+  delivery_of_results: number;
+  execution_and_quality: number;
+  learning_and_development: number;
+  problem_solving: number;
+  collaboration_and_leadership: number;
+  strategic_vision: number;
+  comments?: string | null;
 }
+

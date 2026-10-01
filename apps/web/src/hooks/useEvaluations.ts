@@ -1,11 +1,16 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  createEvaluation,
   getEvaluations,
   getEvaluationById,
   getSubordinates,
   type GetEvaluationsParams,
 } from "../services/evaluation";
-import type { EvaluationItem, SubordinateItem } from "../types/evaluation";
+import type {
+  CreateEvaluationPayload,
+  EvaluationItem,
+  SubordinateItem,
+} from "../types/evaluation";
 
 export function useEvaluations(params?: GetEvaluationsParams) {
   return useQuery<EvaluationItem[]>({
@@ -30,3 +35,16 @@ export function useSubordinates() {
     queryFn: getSubordinates,
   });
 }
+
+export function useCreateEvaluation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateEvaluationPayload) => createEvaluation(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["evaluations"] });
+      queryClient.invalidateQueries({ queryKey: ["subordinates"] });
+    },
+  });
+}
+

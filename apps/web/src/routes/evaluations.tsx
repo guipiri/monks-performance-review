@@ -1,9 +1,14 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router";
-import { useEvaluations, useSubordinates } from "../hooks/useEvaluations";
+import axios from "axios";
+import {
+  useEvaluations,
+  useSubordinates,
+  useCreateEvaluation,
+} from "../hooks/useEvaluations";
 import { useAuth } from "../hooks/useAuth";
 import { routes } from "../constants/routes";
-import type { EvaluationItem } from "../types/evaluation";
+import type { EvaluationItem, SubordinateItem } from "../types/evaluation";
 import { CRITERIA_DEFINITIONS } from "../constants/creteria-metadata";
 
 function getScoreBadge(score: number) {
@@ -64,6 +69,317 @@ function getInitials(name?: string) {
 type SortBy = "recent" | "oldest" | "highest" | "lowest";
 type EvaluatorFilter = "all" | "by_me" | "by_others";
 
+type CriteriaField =
+  | "delivery_of_results"
+  | "execution_and_quality"
+  | "learning_and_development"
+  | "problem_solving"
+  | "collaboration_and_leadership"
+  | "strategic_vision";
+
+interface CreateEvaluationModalProps {
+  subordinates: SubordinateItem[];
+  onClose: () => void;
+}
+
+function CreateEvaluationModal({
+  subordinates,
+  onClose,
+}: CreateEvaluationModalProps) {
+  const createMutation = useCreateEvaluation();
+  const [selectedSubordinateId, setSelectedSubordinateId] =
+    useState<string>("");
+  const [scores, setScores] = useState<Record<CriteriaField, number>>({
+    delivery_of_results: 3,
+    execution_and_quality: 3,
+    learning_and_development: 3,
+    problem_solving: 3,
+    collaboration_and_leadership: 3,
+    strategic_vision: 3,
+  });
+  const [comments, setComments] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const selectedSubordinate = useMemo(() => {
+    if (!selectedSubordinateId) return null;
+    return (
+      subordinates.find((s) => s.id === Number(selectedSubordinateId)) || null
+    );
+  }, [subordinates, selectedSubordinateId]);
+
+  const previewScore = useMemo(() => {
+    let sum = 0;
+    CRITERIA_DEFINITIONS.forEach((crit) => {
+      sum += scores[crit.field] * crit.weight;
+    });
+    return Number((sum / 100).toFixed(2));
+  }, [scores]);
+
+  const previewBadge = getScoreBadge(previewScore);
+
+  const handleScoreChange = (field: CriteriaField, value: number) => {
+    setScores((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedSubordinateId) {
+      setErrorMessage("Por favor, selecione um subordinado para avaliar.");
+      return;
+    }
+
+    if (selectedSubordinate?.already_evaluated_this_week) {
+      setErrorMessage(
+        "Este colaborador já possui avaliação realizada nesta semana.",
+      );
+      return;
+    }
+
+    setErrorMessage(null);
+
+    try {
+      await createMutation.mutateAsync({
+        evaluated_id: Number(selectedSubordinateId),
+        delivery_of_results: scores.delivery_of_results,
+        execution_and_quality: scores.execution_and_quality,
+        learning_and_development: scores.learning_and_development,
+        problem_solving: scores.problem_solving,
+        collaboration_and_leadership: scores.collaboration_and_leadership,
+        strategic_vision: scores.strategic_vision,
+        comments: comments.trim() ? comments.trim() : null,
+      });
+      onClose();
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err) && err.response?.data?.detail) {
+        setErrorMessage(err.response.data.detail);
+      } else if (err instanceof Error) {
+        setErrorMessage(err.message);
+      } else {
+        setErrorMessage(
+          "Ocorreu um erro ao registrar a avaliação. Tente novamente.",
+        );
+      }
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs transition-opacity"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-xl border border-neutral-200 w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Modal Header */}
+        <div className="flex items-start justify-between border-b border-neutral-100 pb-4">
+          <div>
+            <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wider">
+              Nova Avaliação
+            </span>
+            <h3 className="text-xl font-bold text-neutral-900 mt-1">
+              Avaliar Desempenho
+            </h3>
+            <p className="text-xs text-neutral-500 mt-0.5">
+              Preencha os critérios de 1 a 4 e forneça o feedback qualitativo.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-neutral-400 hover:text-neutral-600 p-1.5 rounded-lg hover:bg-neutral-100 transition cursor-pointer"
+            title="Fechar modal"
+          >
+            ✕
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Mensagem de Erro se houver */}
+          {errorMessage && (
+            <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm flex items-start gap-2">
+              <span className="font-bold">⚠️</span>
+              <p className="leading-snug">{errorMessage}</p>
+            </div>
+          )}
+
+          {/* Seleção do Subordinado */}
+          <div className="space-y-2">
+            <label
+              htmlFor="subordinate-select"
+              className="block text-sm font-bold text-neutral-900 uppercase tracking-wide"
+            >
+              Colaborador Avaliado <span className="text-red-500">*</span>
+            </label>
+            <select
+              id="subordinate-select"
+              value={selectedSubordinateId}
+              onChange={(e) => {
+                setSelectedSubordinateId(e.target.value);
+                setErrorMessage(null);
+              }}
+              required
+              className="w-full px-3 py-2.5 border border-neutral-300 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition cursor-pointer shadow-xs"
+            >
+              <option value="">Selecione um colaborador...</option>
+              {subordinates.map((sub) => (
+                <option
+                  key={sub.id}
+                  value={sub.id}
+                  disabled={sub.already_evaluated_this_week}
+                >
+                  {sub.name} ({sub.position_name}) •{" "}
+                  {sub.is_direct ? "Direto" : "Indireto"}
+                  {sub.already_evaluated_this_week
+                    ? " — [Já avaliado esta semana]"
+                    : ""}
+                </option>
+              ))}
+            </select>
+
+            {selectedSubordinate &&
+              selectedSubordinate.already_evaluated_this_week && (
+                <p className="text-xs text-amber-600 bg-amber-50 p-2.5 rounded-lg border border-amber-200 mt-2">
+                  ℹ️ Este colaborador já possui avaliação registrada nesta
+                  semana. A política permite uma avaliação semanal por par
+                  líder-liderado.
+                </p>
+              )}
+          </div>
+
+          {/* Score Banner (Prévia em Tempo Real) */}
+          <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-neutral-500 font-medium">
+                Nota Ponderada Prevista
+              </p>
+              <p className="text-2xl font-black text-neutral-900">
+                {previewScore.toFixed(2)}{" "}
+                <span className="text-sm font-normal text-neutral-500">
+                  / 4.00
+                </span>
+              </p>
+            </div>
+            <div className="text-right">
+              <span
+                className={`inline-block px-3 py-1 rounded-full text-xs font-bold border ${previewBadge.bg} ${previewBadge.border} ${previewBadge.text}`}
+              >
+                {previewBadge.label}
+              </span>
+            </div>
+          </div>
+
+          {/* Critérios de Avaliação */}
+          <div className="space-y-4">
+            <h4 className="text-sm font-bold text-neutral-900 uppercase tracking-wide">
+              Critérios de Desempenho
+            </h4>
+            <div className="space-y-3">
+              {CRITERIA_DEFINITIONS.map((crit) => {
+                const currentScore = scores[crit.field];
+                return (
+                  <div
+                    key={crit.key}
+                    className="p-4 bg-white rounded-xl border border-neutral-200 space-y-3 shadow-xs"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-semibold text-neutral-900">
+                          {crit.title}
+                        </p>
+                        <p className="text-xs text-neutral-500">
+                          Peso no cálculo final: {crit.weight}%
+                        </p>
+                      </div>
+
+                      {/* Botões de Seleção de Nota 1 a 4 */}
+                      <div className="flex items-center gap-1.5 self-start sm:self-auto">
+                        {[1, 2, 3, 4].map((scoreOption) => {
+                          const isSelected = currentScore === scoreOption;
+                          return (
+                            <button
+                              key={scoreOption}
+                              type="button"
+                              onClick={() =>
+                                handleScoreChange(crit.field, scoreOption)
+                              }
+                              className={`w-9 h-9 text-sm font-bold rounded-lg transition cursor-pointer flex items-center justify-center ${
+                                isSelected
+                                  ? "bg-indigo-600 text-white shadow-xs ring-2 ring-indigo-600 ring-offset-1"
+                                  : "bg-neutral-100 hover:bg-neutral-200 text-neutral-700"
+                              }`}
+                              title={`Nota ${scoreOption}`}
+                            >
+                              {scoreOption}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Barra de Progresso */}
+                    <div className="w-full bg-neutral-100 h-2 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-indigo-600 transition-all duration-300"
+                        style={{ width: `${(currentScore / 4) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Comentários e Feedback */}
+          <div className="space-y-2">
+            <label
+              htmlFor="comments"
+              className="block text-sm font-bold text-neutral-900 uppercase tracking-wide"
+            >
+              Observações e Feedback Qualitativo (Opcional)
+            </label>
+            <textarea
+              id="comments"
+              rows={3}
+              maxLength={2000}
+              value={comments}
+              onChange={(e) => setComments(e.target.value)}
+              placeholder="Adicione observações sobre o desempenho, entregas de destaque e pontos de melhoria..."
+              className="w-full p-3 border border-neutral-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition leading-relaxed resize-y"
+            />
+            <div className="flex justify-end text-xs text-neutral-400">
+              {comments.length} / 2000 caracteres
+            </div>
+          </div>
+
+          {/* Modal Footer */}
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-neutral-100">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 hover:bg-neutral-50 rounded-lg transition shadow-xs cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={
+                createMutation.isPending ||
+                !selectedSubordinateId ||
+                selectedSubordinate?.already_evaluated_this_week
+              }
+              className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-neutral-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition shadow-xs cursor-pointer flex items-center gap-2"
+            >
+              {createMutation.isPending ? "Salvando..." : "Salvar Avaliação"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function Evaluations() {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
@@ -74,6 +390,7 @@ export default function Evaluations() {
   const [sortBy, setSortBy] = useState<SortBy>("recent");
   const [activeModalEvaluation, setActiveModalEvaluation] =
     useState<EvaluationItem | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const filterEvaluatedId =
     selectedSubordinateId === "all" ? undefined : Number(selectedSubordinateId);
@@ -208,12 +525,14 @@ export default function Evaluations() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Link
-              to={routes.home.path}
-              className="px-4 py-2 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 hover:bg-neutral-50 rounded-lg transition shadow-sm"
+            <button
+              type="button"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition shadow-xs flex items-center gap-1.5 cursor-pointer"
             >
-              Voltar ao Início
-            </Link>
+              <span className="text-base font-bold leading-none">+</span>
+              <span>Nova avaliação</span>
+            </button>
           </div>
         </div>
 
@@ -533,6 +852,14 @@ export default function Evaluations() {
           </div>
         )}
       </div>
+
+      {/* Modal de Criação de Avaliação */}
+      {isCreateModalOpen && (
+        <CreateEvaluationModal
+          subordinates={subordinates || []}
+          onClose={() => setIsCreateModalOpen(false)}
+        />
+      )}
 
       {/* Modal de Detalhes da Avaliação */}
       {activeModalEvaluation && (
