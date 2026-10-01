@@ -78,7 +78,7 @@ export default function Evaluations() {
     !isLoading && !isError && filteredAndSortedEvaluations.length > 0;
 
   return (
-    <div className="min-h-screen bg-neutral-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-bg-page py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Top Header & Breadcrumb */}
         <EvaluationsHeader

@@ -25,7 +25,7 @@ export function ScoreBadge({
           <span className="text-lg font-bold">{score.toFixed(2)}</span>
           <span className="text-xs opacity-75">/ 4.0</span>
         </div>
-        <span className="text-xs text-neutral-500 font-medium">
+        <span className="text-xs text-text-muted font-medium">
           Classificação: <strong className={badge.text}>{badge.label}</strong>
         </span>
       </div>

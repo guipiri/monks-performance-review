@@ -1,4 +1,4 @@
-import { CRITERIA_DEFINITIONS } from "../constants/creteria-metadata";
+import { CRITERIA_DEFINITIONS } from "../constants/criteria-metadata";
 import type { EvaluationItem } from "../types/evaluation";
 import type { User } from "../types/user";
 
@@ -23,32 +23,32 @@ export interface ScoreBadgeConfig {
 export function getScoreBadge(score: number): ScoreBadgeConfig {
   if (score >= 3.5) {
     return {
-      bg: "bg-emerald-50",
-      text: "text-emerald-700",
-      border: "border-emerald-200",
+      bg: "bg-success-subtle",
+      text: "text-success-text",
+      border: "border-success-border",
       label: "Excelente",
     };
   }
   if (score >= 2.8) {
     return {
-      bg: "bg-indigo-50",
-      text: "text-indigo-700",
-      border: "border-indigo-200",
+      bg: "bg-brand-subtle",
+      text: "text-brand-dark",
+      border: "border-brand-border",
       label: "Bom",
     };
   }
   if (score >= 2.0) {
     return {
-      bg: "bg-amber-50",
-      text: "text-amber-700",
-      border: "border-amber-200",
+      bg: "bg-warning-subtle",
+      text: "text-warning-text",
+      border: "border-warning-border",
       label: "Regular",
     };
   }
   return {
-    bg: "bg-red-50",
-    text: "text-red-700",
-    border: "border-red-200",
+    bg: "bg-error-subtle",
+    text: "text-error-text",
+    border: "border-error-border",
     label: "Abaixo da Média",
   };
 }
@@ -86,11 +86,11 @@ export function calculatePreviewScore(
 }
 
 export function filterAndSortEvaluations(
-  evaluations: EvaluationItem[],
+  evaluations: EvaluationItem[] | undefined,
   evaluatorFilter: EvaluatorFilter,
   searchTerm: string,
   sortBy: SortBy,
-  user: User,
+  user: User | null,
 ) {
   if (!evaluations) return [];
 
@@ -149,7 +149,10 @@ export function filterAndSortEvaluations(
   return list;
 }
 
-export function calculateMetrics(evaluations: EvaluationItem[], user: User) {
+export function calculateMetrics(
+  evaluations: EvaluationItem[] | undefined,
+  user: User | null,
+) {
   if (!evaluations || evaluations.length === 0) {
     return {
       total: 0,

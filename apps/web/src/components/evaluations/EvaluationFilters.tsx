@@ -40,7 +40,7 @@ export function EvaluationFilters({
     evaluatorFilter !== "all";
 
   return (
-    <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-xs space-y-4">
+    <div className="bg-bg-surface p-4 rounded-xl border border-border shadow-xs space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         {/* Input de Busca */}
         <div className="md:col-span-1 relative">
@@ -49,13 +49,13 @@ export function EvaluationFilters({
             placeholder="Buscar por colaborador, avaliador ou cargo..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full pl-3 pr-8 py-2 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+            className="w-full pl-3 pr-8 py-2 border border-border bg-bg-surface rounded-lg text-sm text-text-body placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition"
           />
           {searchTerm && (
             <button
               type="button"
               onClick={() => onSearchChange("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-neutral-400 hover:text-neutral-600 cursor-pointer"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-text-muted hover:text-text-body cursor-pointer"
               title="Limpar busca"
             >
               ✕
@@ -68,7 +68,7 @@ export function EvaluationFilters({
           <select
             value={selectedSubordinateId}
             onChange={(e) => onSubordinateChange(e.target.value)}
-            className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition cursor-pointer"
+            className="w-full px-3 py-2 border border-border bg-bg-surface text-text-body rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition cursor-pointer"
           >
             <option value="all">Todos os subordinados</option>
             {subordinates?.map((sub) => (
@@ -87,7 +87,7 @@ export function EvaluationFilters({
             onChange={(e) =>
               onEvaluatorFilterChange(e.target.value as EvaluatorFilter)
             }
-            className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition cursor-pointer"
+            className="w-full px-3 py-2 border border-border bg-bg-surface text-text-body rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition cursor-pointer"
           >
             <option value="all">Todos os avaliadores</option>
             <option value="by_me">Feitas por mim ({byMeCount})</option>
@@ -102,7 +102,7 @@ export function EvaluationFilters({
           <select
             value={sortBy}
             onChange={(e) => onSortByChange(e.target.value as SortBy)}
-            className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition cursor-pointer"
+            className="w-full px-3 py-2 border border-border bg-bg-surface text-text-body rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition cursor-pointer"
           >
             <option value="recent">Mais recentes</option>
             <option value="oldest">Mais antigas</option>
@@ -113,7 +113,7 @@ export function EvaluationFilters({
       </div>
 
       {hasActiveFilters && (
-        <div className="flex items-center justify-between text-xs text-neutral-600 pt-2 border-t border-neutral-100">
+        <div className="flex items-center justify-between text-xs text-text-muted pt-2 border-t border-border-subtle">
           <span>
             Exibindo <strong>{filteredCount}</strong> de{" "}
             <strong>{totalCount}</strong> avaliações
@@ -121,7 +121,7 @@ export function EvaluationFilters({
           <button
             type="button"
             onClick={onClearFilters}
-            className="text-indigo-600 hover:text-indigo-800 font-medium cursor-pointer"
+            className="text-brand hover:text-brand-dark font-medium cursor-pointer"
           >
             Limpar filtros
           </button>

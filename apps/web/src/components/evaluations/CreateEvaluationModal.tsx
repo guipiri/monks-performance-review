@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import axios from "axios";
 import { useCreateEvaluation } from "../../hooks/useEvaluations";
-import { CRITERIA_DEFINITIONS } from "../../constants/creteria-metadata";
+import { CRITERIA_DEFINITIONS } from "../../constants/criteria-metadata";
 import type { SubordinateItem } from "../../types/evaluation";
 import {
   calculatePreviewScore,
@@ -43,10 +43,7 @@ export function CreateEvaluationModal({
     );
   }, [subordinates, selectedSubordinateId]);
 
-  const previewScore = useMemo(
-    () => calculatePreviewScore(scores),
-    [scores],
-  );
+  const previewScore = useMemo(() => calculatePreviewScore(scores), [scores]);
 
   const handleScoreChange = (field: CriteriaField, value: number) => {
     setScores((prev) => ({ ...prev, [field]: value }));
@@ -95,23 +92,23 @@ export function CreateEvaluationModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs transition-opacity"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-overlay backdrop-blur-xs transition-opacity"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-xl border border-neutral-200 w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-6"
+        className="bg-bg-surface rounded-2xl shadow-xl border border-border w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-6"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="flex items-start justify-between border-b border-neutral-100 pb-4">
+        <div className="flex items-start justify-between border-b border-border-subtle pb-4">
           <div>
-            <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-brand uppercase tracking-wider">
               Nova Avaliação
             </span>
-            <h3 className="text-xl font-bold text-neutral-900 mt-1">
+            <h3 className="text-xl font-bold text-text-heading mt-1">
               Avaliar Desempenho
             </h3>
-            <p className="text-xs text-neutral-500 mt-0.5">
+            <p className="text-xs text-text-muted mt-0.5">
               Preencha os critérios de 1 a 4 e forneça o feedback qualitativo.
             </p>
           </div>
@@ -119,7 +116,7 @@ export function CreateEvaluationModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-neutral-400 hover:text-neutral-600 p-1.5 rounded-lg hover:bg-neutral-100 transition cursor-pointer"
+            className="text-text-muted hover:text-text-body p-1.5 rounded-lg hover:bg-bg-elevated transition cursor-pointer"
             title="Fechar modal"
           >
             ✕
@@ -129,7 +126,7 @@ export function CreateEvaluationModal({
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Mensagem de Erro se houver */}
           {errorMessage && (
-            <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm flex items-start gap-2">
+            <div className="p-3 bg-error-subtle border border-error-border text-error-text rounded-xl text-sm flex items-start gap-2">
               <span className="font-bold">⚠️</span>
               <p className="leading-snug">{errorMessage}</p>
             </div>
@@ -139,9 +136,9 @@ export function CreateEvaluationModal({
           <div className="space-y-2">
             <label
               htmlFor="subordinate-select"
-              className="block text-sm font-bold text-neutral-900 uppercase tracking-wide"
+              className="block text-sm font-bold text-text-heading uppercase tracking-wide"
             >
-              Colaborador Avaliado <span className="text-red-500">*</span>
+              Colaborador Avaliado <span className="text-error">*</span>
             </label>
             <select
               id="subordinate-select"
@@ -151,7 +148,7 @@ export function CreateEvaluationModal({
                 setErrorMessage(null);
               }}
               required
-              className="w-full px-3 py-2.5 border border-neutral-300 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition cursor-pointer shadow-xs"
+              className="w-full px-3 py-2.5 border border-border rounded-xl text-sm bg-bg-surface text-text-body focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition cursor-pointer shadow-xs"
             >
               <option value="">Selecione um colaborador...</option>
               {subordinates.map((sub) => (
@@ -171,7 +168,7 @@ export function CreateEvaluationModal({
 
             {selectedSubordinate &&
               selectedSubordinate.already_evaluated_this_week && (
-                <p className="text-xs text-amber-600 bg-amber-50 p-2.5 rounded-lg border border-amber-200 mt-2">
+                <p className="text-xs text-warning-text bg-warning-subtle p-2.5 rounded-lg border border-warning-border mt-2">
                   ℹ️ Este colaborador já possui avaliação registrada nesta
                   semana. A política permite uma avaliação semanal por par
                   líder-liderado.
@@ -180,14 +177,14 @@ export function CreateEvaluationModal({
           </div>
 
           {/* Score Banner (Prévia em Tempo Real) */}
-          <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-4 flex items-center justify-between">
+          <div className="bg-bg-sunken border border-border rounded-xl p-4 flex items-center justify-between">
             <div>
-              <p className="text-xs text-neutral-500 font-medium">
+              <p className="text-xs text-text-muted font-medium">
                 Nota Ponderada Prevista
               </p>
-              <p className="text-2xl font-black text-neutral-900">
+              <p className="text-2xl font-black text-text-heading">
                 {previewScore.toFixed(2)}{" "}
-                <span className="text-sm font-normal text-neutral-500">
+                <span className="text-sm font-normal text-text-muted">
                   / 4.00
                 </span>
               </p>
@@ -199,7 +196,7 @@ export function CreateEvaluationModal({
 
           {/* Critérios de Avaliação */}
           <div className="space-y-4">
-            <h4 className="text-sm font-bold text-neutral-900 uppercase tracking-wide">
+            <h4 className="text-sm font-bold text-text-heading uppercase tracking-wide">
               Critérios de Desempenho
             </h4>
             <div className="space-y-3">
@@ -221,7 +218,7 @@ export function CreateEvaluationModal({
           <div className="space-y-2">
             <label
               htmlFor="comments"
-              className="block text-sm font-bold text-neutral-900 uppercase tracking-wide"
+              className="block text-sm font-bold text-text-heading uppercase tracking-wide"
             >
               Observações e Feedback Qualitativo (Opcional)
             </label>
@@ -232,19 +229,19 @@ export function CreateEvaluationModal({
               value={comments}
               onChange={(e) => setComments(e.target.value)}
               placeholder="Adicione observações sobre o desempenho, entregas de destaque e pontos de melhoria..."
-              className="w-full p-3 border border-neutral-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition leading-relaxed resize-y"
+              className="w-full p-3 border border-border bg-bg-surface text-text-body placeholder:text-text-muted rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition leading-relaxed resize-y"
             />
-            <div className="flex justify-end text-xs text-neutral-400">
+            <div className="flex justify-end text-xs text-text-muted">
               {comments.length} / 2000 caracteres
             </div>
           </div>
 
           {/* Modal Footer */}
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-neutral-100">
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-border-subtle">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 hover:bg-neutral-50 rounded-lg transition shadow-xs cursor-pointer"
+              className="px-4 py-2 text-sm font-medium text-text-body bg-bg-surface border border-border hover:bg-bg-elevated rounded-lg transition shadow-xs cursor-pointer"
             >
               Cancelar
             </button>
@@ -255,7 +252,7 @@ export function CreateEvaluationModal({
                 !selectedSubordinateId ||
                 selectedSubordinate?.already_evaluated_this_week
               }
-              className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-neutral-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition shadow-xs cursor-pointer flex items-center gap-2"
+              className="px-5 py-2 bg-brand hover:bg-brand-dark disabled:bg-neutral-300 disabled:cursor-not-allowed text-brand-foreground text-sm font-medium rounded-lg transition shadow-xs cursor-pointer flex items-center gap-2"
             >
               {createMutation.isPending ? "Salvando..." : "Salvar Avaliação"}
             </button>

@@ -6,6 +6,7 @@
   --color-brand-dark: var(--brand-dark);
   --color-brand-light: var(--brand-light);
   --color-brand-subtle: var(--brand-subtle);
+  --color-brand-border: var(--brand-border);
   --color-brand-foreground: var(--brand-foreground);
 
   /* ACCENT */
@@ -13,6 +14,7 @@
   --color-accent-dark: var(--accent-dark);
   --color-accent-light: var(--accent-light);
   --color-accent-subtle: var(--accent-subtle);
+  --color-accent-border: var(--accent-border);
   --color-accent-foreground: var(--accent-foreground);
 
   /* NEUTRAL */
@@ -49,12 +51,27 @@
   /* STATUS */
   --color-success: var(--success-default);
   --color-success-light: var(--success-light);
+  --color-success-subtle: var(--success-subtle);
+  --color-success-border: var(--success-border);
+  --color-success-text: var(--success-text);
+
   --color-warning: var(--warning-default);
   --color-warning-light: var(--warning-light);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-warning-border: var(--warning-border);
+  --color-warning-text: var(--warning-text);
+
   --color-error: var(--error-default);
   --color-error-light: var(--error-light);
+  --color-error-subtle: var(--error-subtle);
+  --color-error-border: var(--error-border);
+  --color-error-text: var(--error-text);
+
   --color-info: var(--info-default);
   --color-info-light: var(--info-light);
+  --color-info-subtle: var(--info-subtle);
+  --color-info-border: var(--info-border);
+  --color-info-text: var(--info-text);
 
   /* GRADIENTS */
   --background-image-brand: var(--gradient-brand);
@@ -160,22 +177,24 @@
   --brand-default: hsl(235, 86%, 65%);
   --brand-dark: hsl(231, 68%, 53%);
   --brand-light: hsl(239, 100%, 79%);
-  --brand-subtle: hsl(235, 86%, 65%);
+  --brand-subtle: hsl(235, 100%, 97%);
+  --brand-border: hsl(235, 90%, 88%);
   --brand-foreground: hsl(0, 0%, 100%);
 
   /* ACCENT */
   --accent-default: hsl(206, 9%, 15%);
   --accent-dark: hsl(203, 20%, 8%);
   --accent-light: hsl(206, 4%, 31%);
-  --accent-subtle: hsl(206, 9%, 15%);
+  --accent-subtle: hsl(206, 12%, 94%);
+  --accent-border: hsl(206, 8%, 84%);
   --accent-foreground: hsl(0, 0%, 100%);
 
   /* NEUTRAL */
-  --neutral-50: hsl(240, 10%, 94%);
-  --neutral-100: hsl(240, 3%, 83%);
-  --neutral-200: hsl(220, 2%, 72%);
-  --neutral-300: hsl(220, 2%, 61%);
-  --neutral-400: hsl(240, 1%, 51%);
+  --neutral-50: hsl(240, 10%, 97%);
+  --neutral-100: hsl(240, 5%, 92%);
+  --neutral-200: hsl(220, 6%, 86%);
+  --neutral-300: hsl(220, 4%, 72%);
+  --neutral-400: hsl(240, 2%, 55%);
   --neutral-500: hsl(240, 1%, 41%);
   --neutral-600: hsl(220, 2%, 31%);
   --neutral-700: hsl(220, 3%, 22%);
@@ -185,43 +204,58 @@
   /* TEXT */
   --text-heading: hsl(240, 8%, 3%);
   --text-body: hsl(210, 10%, 20%);
-  --text-muted: hsl(240, 1%, 41%);
+  --text-muted: hsl(240, 2%, 46%);
   --text-inverse: hsl(0, 0%, 100%);
   --text-link: hsl(235, 86%, 65%);
 
   /* BACKGROUND */
-  --bg-page: hsl(220, 13%, 95%);
+  --bg-page: hsl(220, 13%, 97%);
   --bg-surface: hsl(0, 0%, 100%);
-  --bg-elevated: hsl(210, 11%, 93%);
-  --bg-sunken: hsl(216, 10%, 90%);
+  --bg-elevated: hsl(210, 11%, 94%);
+  --bg-sunken: hsl(216, 10%, 93%);
 
   /* BORDER */
-  --border-default: hsl(0, 0%, 0%);
-  --border-strong: hsl(0, 0%, 0%);
-  --border-subtle: hsl(0, 0%, 0%);
-  --border-focus: hsl(0, 0%, 0%);
+  --border-default: hsl(220, 6%, 86%);
+  --border-strong: hsl(220, 4%, 72%);
+  --border-subtle: hsl(240, 5%, 92%);
+  --border-focus: hsl(235, 86%, 65%);
 
   /* STATUS */
   --success-default: hsl(142, 65%, 36%);
   --success-light: hsl(135, 66%, 67%);
+  --success-subtle: hsl(138, 76%, 97%);
+  --success-border: hsl(141, 60%, 82%);
+  --success-text: hsl(142, 76%, 28%);
+
   --warning-default: hsl(38, 90%, 50%);
   --warning-light: hsl(51, 100%, 70%);
+  --warning-subtle: hsl(48, 100%, 96%);
+  --warning-border: hsl(45, 93%, 78%);
+  --warning-text: hsl(32, 95%, 34%);
+
   --error-default: hsl(0, 84%, 60%);
   --error-light: hsl(6, 100%, 76%);
+  --error-subtle: hsl(0, 100%, 97%);
+  --error-border: hsl(0, 93%, 87%);
+  --error-text: hsl(0, 74%, 42%);
+
   --info-default: hsl(217, 90%, 60%);
   --info-light: hsl(211, 100%, 80%);
+  --info-subtle: hsl(214, 100%, 97%);
+  --info-border: hsl(213, 94%, 87%);
+  --info-text: hsl(221, 83%, 45%);
 
   /* GRADIENTS */
-  --gradient-brand: linear-gradient(135deg, #364fd8 0%, #23272a 100%);
-  --gradient-accent: linear-gradient(135deg, #23272a 0%, #4b4f52 100%);
-  --gradient-hero: linear-gradient(135deg, #364fd8 0%, #5865f2 50%, #23272a 100%);
+  --gradient-brand: linear-gradient(135deg, hsl(235, 86%, 65%) 0%, hsl(231, 68%, 53%) 100%);
+  --gradient-accent: linear-gradient(135deg, hsl(206, 9%, 15%) 0%, hsl(206, 4%, 31%) 100%);
+  --gradient-hero: linear-gradient(135deg, hsl(235, 86%, 65%) 0%, hsl(239, 100%, 79%) 50%, hsl(206, 9%, 15%) 100%);
   --gradient-surface: linear-gradient(to bottom, #ffffff 0%, #fdfdff 100%);
   --gradient-card: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 100%);
 
   /* SHADOWS */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   --shadow-brand: 0 0 20px rgb(88 101 242 / 0.2);
 
@@ -277,9 +311,9 @@
   --base-black: #000000;
   --selection-background: rgb(88 101 242 / 0.3);
   --selection-foreground: inherit;
-  --overlay: rgba(0, 0, 0, 0.4);
+  --overlay: rgba(0, 0, 0, 0.45);
   --ring: rgb(88 101 242 / 0.4);
-  --skeleton: #d1d1d4;
+  --skeleton: #e2e4e9;
 
   /* BRAND SHADES */
   --brand-50: hsl(202, 100%, 93%);
@@ -293,7 +327,6 @@
   --brand-800: hsl(240, 66%, 33%);
   --brand-900: hsl(241, 73%, 24%);
   --brand-950: hsl(248, 100%, 17%);
-
 }
 
 @layer base {

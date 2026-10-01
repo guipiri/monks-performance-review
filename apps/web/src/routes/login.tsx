@@ -52,19 +52,19 @@ function Login() {
   const errorMessage = getErrorMessage();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-50 px-4 py-12">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-md border border-neutral-200 p-8 space-y-6">
+    <div className="min-h-screen flex items-center justify-center bg-bg-page px-4 py-12">
+      <div className="w-full max-w-md bg-bg-surface rounded-xl shadow-md border border-border p-8 space-y-6">
         <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold text-neutral-900 tracking-tight">
+          <h1 className="text-2xl font-bold text-text-heading tracking-tight">
             Entrar na conta
           </h1>
-          <p className="text-sm text-neutral-600">
+          <p className="text-sm text-text-muted">
             Digite seu e-mail e senha para acessar sua conta
           </p>
         </div>
 
         {errorMessage && (
-          <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
+          <div className="p-3 bg-error-subtle border border-error-border text-error-text text-sm rounded-lg">
             {errorMessage}
           </div>
         )}
@@ -73,7 +73,7 @@ function Login() {
           <div className="space-y-1">
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-neutral-700"
+              className="block text-sm font-medium text-text-body"
             >
               E-mail
             </label>
@@ -84,7 +84,7 @@ function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="seu@email.com"
-              className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+              className="w-full px-3 py-2 border border-border bg-bg-surface rounded-lg text-sm text-text-body placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition"
               disabled={loginMutation.isPending}
             />
           </div>
@@ -92,7 +92,7 @@ function Login() {
           <div className="space-y-1">
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-neutral-700"
+              className="block text-sm font-medium text-text-body"
             >
               Senha
             </label>
@@ -103,7 +103,7 @@ function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+              className="w-full px-3 py-2 border border-border bg-bg-surface rounded-lg text-sm text-text-body placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition"
               disabled={loginMutation.isPending}
             />
           </div>
@@ -111,7 +111,7 @@ function Login() {
           <button
             type="submit"
             disabled={loginMutation.isPending}
-            className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            className="w-full py-2.5 px-4 bg-brand hover:bg-brand-dark text-brand-foreground text-sm font-medium rounded-lg transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-xs"
           >
             {loginMutation.isPending ? "Entrando..." : "Entrar"}
           </button>
