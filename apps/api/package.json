@@ -4,8 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "uv run uvicorn src.main:app --reload --port 8000",
-    "lint": "uv run ruff check .",
+    "lint": "uv run ruff check . --fix",
     "test": "uv run pytest",
-    "build": "echo 'No build step needed for Python'"
+    "build": "echo 'No build step needed for Python'",
+    "db:migrate": "uv run alembic upgrade head",
+    "db:generate": "uv run alembic revision --autogenerate",
+    "db:rollback": "uv run alembic downgrade -1",
+    "db:history": "uv run alembic history"
   }
 }
