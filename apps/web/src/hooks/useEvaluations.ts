@@ -1,20 +1,23 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-  getEvaluationsGiven,
+  getEvaluations,
   getEvaluationById,
   getSubordinates,
-  getCriteriaMetadata,
+  type GetEvaluationsParams,
 } from "../services/evaluation";
+import type { EvaluationItem, SubordinateItem } from "../types/evaluation";
 
-export function useEvaluationsGiven(evaluatedId?: number) {
-  return useQuery({
-    queryKey: ["evaluations", "given", evaluatedId],
-    queryFn: () => getEvaluationsGiven(evaluatedId),
+export function useEvaluations(params?: GetEvaluationsParams) {
+  return useQuery<EvaluationItem[]>({
+    queryKey: ["evaluations", params?.evaluatedId, params?.evaluatorId],
+    queryFn: () => getEvaluations(params),
   });
 }
 
+export const useEvaluationsGiven = useEvaluations;
+
 export function useEvaluationDetails(id: number | null) {
-  return useQuery({
+  return useQuery<EvaluationItem | null>({
     queryKey: ["evaluations", "detail", id],
     queryFn: () => (id ? getEvaluationById(id) : null),
     enabled: Boolean(id),
@@ -22,15 +25,8 @@ export function useEvaluationDetails(id: number | null) {
 }
 
 export function useSubordinates() {
-  return useQuery({
+  return useQuery<SubordinateItem[]>({
     queryKey: ["subordinates"],
     queryFn: getSubordinates,
-  });
-}
-
-export function useCriteriaMetadata() {
-  return useQuery({
-    queryKey: ["evaluationCriteria"],
-    queryFn: getCriteriaMetadata,
   });
 }

@@ -4,8 +4,6 @@ from fastapi import APIRouter, HTTPException, Query, status
 
 from src.api.deps import CurrentUser, DbSession
 from src.schemas.evaluation import (
-    CRITERIA_METADATA,
-    CriterionMetadataResponse,
     EvaluationCreate,
     EvaluationResponse,
     SubordinateResponse,
@@ -13,19 +11,12 @@ from src.schemas.evaluation import (
 from src.services.evaluation_service import (
     create_evaluation,
     get_evaluation_by_id,
-    get_evaluations_by_leader,
+    get_evaluations_for_user_hierarchy,
+    get_hierarchy_subordinates_map,
     get_subordinates_list_with_status,
 )
 
 router = APIRouter(prefix="/evaluations", tags=["evaluations"])
-
-
-@router.get("/criteria", response_model=list[CriterionMetadataResponse])
-def get_evaluation_criteria():
-    """
-    Retorna as perguntas da avaliação, seus pesos e limites de nota.
-    """
-    return CRITERIA_METADATA
 
 
 @router.get("/subordinates", response_model=list[SubordinateResponse])
@@ -67,14 +58,21 @@ def list_evaluations(
     db: DbSession,
     current_user: CurrentUser,
     evaluated_id: Optional[int] = Query(
-        None, description="Filtrar por ID do liderado avaliado"
+        None, description="Filtrar por ID do funcionário avaliado"
+    ),
+    evaluator_id: Optional[int] = Query(
+        None, description="Filtrar por ID do avaliador"
     ),
 ):
     """
-    Lista as avaliações realizadas pelo usuário logado.
+    Lista as avaliações feitas para subordinados (diretos e indiretos) do usuário logado
+    feitas por ele ou por outros líderes.
     """
-    return get_evaluations_by_leader(
-        db, leader_id=current_user.id, evaluated_id=evaluated_id
+    return get_evaluations_for_user_hierarchy(
+        db,
+        user_id=current_user.id,
+        evaluated_id=evaluated_id,
+        evaluator_id=evaluator_id,
     )
 
 
@@ -94,11 +92,12 @@ def get_evaluation(
             detail="Avaliação não encontrada.",
         )
 
-    # Permitir visualização pelo avaliador ou pelo próprio avaliado
-    if (
-        evaluation.evaluator_id != current_user.id
-        and evaluation.evaluated_id != current_user.id
-    ):
+    # Permitir visualização pelo avaliador ou por qualquer líder que tenha o avaliado
+    # na sua hierarquia de subordinados (diretos ou indiretos)
+    subordinates_map = get_hierarchy_subordinates_map(db, leader_id=current_user.id)
+    is_subordinate = evaluation.evaluated_id in subordinates_map
+
+    if evaluation.evaluator_id != current_user.id and not is_subordinate:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Você não tem permissão para visualizar esta avaliação.",

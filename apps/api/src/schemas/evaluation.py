@@ -12,63 +12,6 @@ CRITERIA_WEIGHTS = {
     "strategic_vision": 10,
 }
 
-CRITERIA_METADATA = [
-    {
-        "key": "delivery_of_results",
-        "title": "Entrega de Resultados",
-        "weight": 25,
-        "description": (
-            "Capacidade de entregar resultados consistentes, "
-            "atingir metas e gerar impacto."
-        ),
-    },
-    {
-        "key": "execution_and_quality",
-        "title": "Execução e Qualidade do Trabalho",
-        "weight": 20,
-        "description": (
-            "Atenção a detalhes, padrões técnicos elevados, "
-            "eficiência e precisão na execução."
-        ),
-    },
-    {
-        "key": "learning_and_development",
-        "title": "Capacidade de Aprendizado e Desenvolvimento",
-        "weight": 20,
-        "description": (
-            "Velocidade de absorção de novos conhecimentos, "
-            "adaptabilidade e busca contínua por aprimoramento."
-        ),
-    },
-    {
-        "key": "problem_solving",
-        "title": "Resolução de Problemas e Pensamento Crítico",
-        "weight": 15,
-        "description": (
-            "Habilidade analítica para identificar causas raiz "
-            "e propor soluções eficazes e criativas."
-        ),
-    },
-    {
-        "key": "collaboration_and_leadership",
-        "title": "Colaboração, Influência e Liderança",
-        "weight": 10,
-        "description": (
-            "Trabalho em equipe, comunicação assertiva, "
-            "mentoria e influência positiva no time."
-        ),
-    },
-    {
-        "key": "strategic_vision",
-        "title": "Visão Estratégica e Potencial de Crescimento",
-        "weight": 10,
-        "description": (
-            "Compreensão do negócio, alinhamento aos objetivos "
-            "de longo prazo e prontidão para assumir maiores desafios."
-        ),
-    },
-]
-
 
 class EvaluationCreate(BaseModel):
     evaluated_id: int = Field(
@@ -165,12 +108,3 @@ class SubordinateResponse(BaseModel):
     last_evaluation_date: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class CriterionMetadataResponse(BaseModel):
-    key: str
-    title: str
-    weight: int
-    description: str
-    min_score: int = 1
-    max_score: int = 4

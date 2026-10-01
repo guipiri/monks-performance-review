@@ -1,47 +1,10 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router";
-import { useEvaluationsGiven, useSubordinates } from "../hooks/useEvaluations";
+import { useEvaluations, useSubordinates } from "../hooks/useEvaluations";
+import { useAuth } from "../hooks/useAuth";
 import { routes } from "../constants/routes";
 import type { EvaluationItem } from "../types/evaluation";
-
-const CRITERIA_DEFINITIONS = [
-  {
-    key: "delivery_of_results",
-    title: "Entrega de Resultados",
-    weight: 25,
-    field: "delivery_of_results" as const,
-  },
-  {
-    key: "execution_and_quality",
-    title: "Execução e Qualidade do Trabalho",
-    weight: 20,
-    field: "execution_and_quality" as const,
-  },
-  {
-    key: "learning_and_development",
-    title: "Capacidade de Aprendizado e Desenvolvimento",
-    weight: 20,
-    field: "learning_and_development" as const,
-  },
-  {
-    key: "problem_solving",
-    title: "Resolução de Problemas e Pensamento Crítico",
-    weight: 15,
-    field: "problem_solving" as const,
-  },
-  {
-    key: "collaboration_and_leadership",
-    title: "Colaboração, Influência e Liderança",
-    weight: 10,
-    field: "collaboration_and_leadership" as const,
-  },
-  {
-    key: "strategic_vision",
-    title: "Visão Estratégica e Potencial",
-    weight: 10,
-    field: "strategic_vision" as const,
-  },
-];
+import { CRITERIA_DEFINITIONS } from "../constants/creteria-metadata";
 
 function getScoreBadge(score: number) {
   if (score >= 3.5) {
@@ -50,7 +13,6 @@ function getScoreBadge(score: number) {
       text: "text-emerald-700",
       border: "border-emerald-200",
       label: "Excelente",
-      barColor: "bg-emerald-500",
     };
   }
   if (score >= 2.8) {
@@ -59,7 +21,6 @@ function getScoreBadge(score: number) {
       text: "text-indigo-700",
       border: "border-indigo-200",
       label: "Bom",
-      barColor: "bg-indigo-500",
     };
   }
   if (score >= 2.0) {
@@ -68,7 +29,6 @@ function getScoreBadge(score: number) {
       text: "text-amber-700",
       border: "border-amber-200",
       label: "Regular",
-      barColor: "bg-amber-500",
     };
   }
   return {
@@ -76,7 +36,6 @@ function getScoreBadge(score: number) {
     text: "text-red-700",
     border: "border-red-200",
     label: "Abaixo da Média",
-    barColor: "bg-red-500",
   };
 }
 
@@ -103,31 +62,47 @@ function getInitials(name?: string) {
 }
 
 type SortBy = "recent" | "oldest" | "highest" | "lowest";
+type EvaluatorFilter = "all" | "by_me" | "by_others";
 
-export default function EvaluationsGiven() {
+export default function Evaluations() {
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSubordinateId, setSelectedSubordinateId] =
     useState<string>("all");
+  const [evaluatorFilter, setEvaluatorFilter] =
+    useState<EvaluatorFilter>("all");
   const [sortBy, setSortBy] = useState<SortBy>("recent");
   const [activeModalEvaluation, setActiveModalEvaluation] =
     useState<EvaluationItem | null>(null);
 
-  const filterParam =
+  const filterEvaluatedId =
     selectedSubordinateId === "all" ? undefined : Number(selectedSubordinateId);
+
   const {
     data: evaluations,
     isLoading,
     isError,
     refetch,
-  } = useEvaluationsGiven(filterParam);
+  } = useEvaluations({
+    evaluatedId: filterEvaluatedId,
+  });
+
   const { data: subordinates } = useSubordinates();
 
-  // Filtragem e ordenação no cliente para busca rápida por texto
+  // Filtragem e ordenação no cliente
   const filteredAndSortedEvaluations = useMemo(() => {
     if (!evaluations) return [];
 
     let list = [...evaluations];
 
+    // Filtro por origem do avaliador (feitas por mim vs outros)
+    if (evaluatorFilter === "by_me" && user) {
+      list = list.filter((item) => item.evaluator_id === user.id);
+    } else if (evaluatorFilter === "by_others" && user) {
+      list = list.filter((item) => item.evaluator_id !== user.id);
+    }
+
+    // Filtro textual
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       list = list.filter((item) => {
@@ -135,11 +110,16 @@ export default function EvaluationsGiven() {
         const evaluatedEmail = item.evaluated?.email?.toLowerCase() || "";
         const evaluatedPosition =
           item.evaluated?.position_name?.toLowerCase() || "";
+        const evaluatorName = item.evaluator?.name?.toLowerCase() || "";
+        const evaluatorPosition =
+          item.evaluator?.position_name?.toLowerCase() || "";
         const comments = item.comments?.toLowerCase() || "";
         return (
           evaluatedName.includes(term) ||
           evaluatedEmail.includes(term) ||
           evaluatedPosition.includes(term) ||
+          evaluatorName.includes(term) ||
+          evaluatorPosition.includes(term) ||
           comments.includes(term)
         );
       });
@@ -166,12 +146,19 @@ export default function EvaluationsGiven() {
     });
 
     return list;
-  }, [evaluations, searchTerm, sortBy]);
+  }, [evaluations, evaluatorFilter, user, searchTerm, sortBy]);
 
-  // Métricas rápidas
+  // Métricas
   const metrics = useMemo(() => {
     if (!evaluations || evaluations.length === 0) {
-      return { total: 0, averageScore: 0, uniqueEvaluated: 0, highestScore: 0 };
+      return {
+        total: 0,
+        averageScore: 0,
+        uniqueEvaluated: 0,
+        highestScore: 0,
+        byMeCount: 0,
+        byOthersCount: 0,
+      };
     }
 
     const total = evaluations.length;
@@ -180,9 +167,20 @@ export default function EvaluationsGiven() {
     const uniqueEvaluated = new Set(evaluations.map((e) => e.evaluated_id))
       .size;
     const highestScore = Math.max(...evaluations.map((e) => e.final_score));
+    const byMeCount = user
+      ? evaluations.filter((e) => e.evaluator_id === user.id).length
+      : 0;
+    const byOthersCount = total - byMeCount;
 
-    return { total, averageScore, uniqueEvaluated, highestScore };
-  }, [evaluations]);
+    return {
+      total,
+      averageScore,
+      uniqueEvaluated,
+      highestScore,
+      byMeCount,
+      byOthersCount,
+    };
+  }, [evaluations, user]);
 
   return (
     <div className="min-h-screen bg-neutral-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -198,16 +196,14 @@ export default function EvaluationsGiven() {
                 <span>&larr;</span> Início
               </Link>
               <span className="text-neutral-400">/</span>
-              <span className="text-sm text-neutral-600">
-                Avaliações Feitas
-              </span>
+              <span className="text-sm text-neutral-600">Avaliações</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900 tracking-tight">
-              Avaliações que eu fiz
+              Avaliações
             </h1>
             <p className="text-sm text-neutral-600 mt-1">
               Consulte e acompanhe todas as avaliações de desempenho realizadas
-              por você.
+              para seus subordinados diretos e indiretos.
             </p>
           </div>
 
@@ -225,7 +221,7 @@ export default function EvaluationsGiven() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-sm">
             <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider">
-              Total Realizadas
+              Total Avaliações
             </p>
             <p className="text-2xl font-bold text-neutral-900 mt-1">
               {metrics.total}
@@ -246,7 +242,7 @@ export default function EvaluationsGiven() {
 
           <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-sm">
             <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider">
-              Liderados Avaliados
+              Subordinados Avaliados
             </p>
             <p className="text-2xl font-bold text-neutral-900 mt-1">
               {metrics.uniqueEvaluated}
@@ -270,12 +266,12 @@ export default function EvaluationsGiven() {
 
         {/* Filtros e Barra de Busca */}
         <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-sm space-y-4">
-          <div className="flex flex-col md:flex-row gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             {/* Input de Busca */}
-            <div className="flex-1 relative">
+            <div className="md:col-span-1 relative">
               <input
                 type="text"
-                placeholder="Buscar por colaborador, cargo ou comentário..."
+                placeholder="Buscar por colaborador, avaliador ou cargo..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-3 pr-8 py-2 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
@@ -291,24 +287,44 @@ export default function EvaluationsGiven() {
               )}
             </div>
 
-            {/* Dropdown de Liderado */}
-            <div className="w-full md:w-64">
+            {/* Dropdown de Subordinado */}
+            <div>
               <select
                 value={selectedSubordinateId}
                 onChange={(e) => setSelectedSubordinateId(e.target.value)}
                 className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition cursor-pointer"
               >
-                <option value="all">Todos os liderados</option>
+                <option value="all">Todos os subordinados</option>
                 {subordinates?.map((sub) => (
                   <option key={sub.id} value={sub.id}>
-                    {sub.name} ({sub.position_name})
+                    {sub.name} ({sub.position_name}){" "}
+                    {sub.is_direct ? "• Direto" : "• Indireto"}
                   </option>
                 ))}
               </select>
             </div>
 
+            {/* Filtro por Avaliador (Feitas por mim vs Outros) */}
+            <div>
+              <select
+                value={evaluatorFilter}
+                onChange={(e) =>
+                  setEvaluatorFilter(e.target.value as EvaluatorFilter)
+                }
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition cursor-pointer"
+              >
+                <option value="all">Todos os avaliadores</option>
+                <option value="by_me">
+                  Feitas por mim ({metrics.byMeCount})
+                </option>
+                <option value="by_others">
+                  Feitas por outros líderes ({metrics.byOthersCount})
+                </option>
+              </select>
+            </div>
+
             {/* Ordenação */}
-            <div className="w-full md:w-52">
+            <div>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortBy)}
@@ -322,7 +338,9 @@ export default function EvaluationsGiven() {
             </div>
           </div>
 
-          {(searchTerm || selectedSubordinateId !== "all") && (
+          {(searchTerm ||
+            selectedSubordinateId !== "all" ||
+            evaluatorFilter !== "all") && (
             <div className="flex items-center justify-between text-xs text-neutral-600 pt-2 border-t border-neutral-100">
               <span>
                 Exibindo <strong>{filteredAndSortedEvaluations.length}</strong>{" "}
@@ -333,6 +351,7 @@ export default function EvaluationsGiven() {
                 onClick={() => {
                   setSearchTerm("");
                   setSelectedSubordinateId("all");
+                  setEvaluatorFilter("all");
                 }}
                 className="text-indigo-600 hover:text-indigo-800 font-medium cursor-pointer"
               >
@@ -397,16 +416,21 @@ export default function EvaluationsGiven() {
                 Nenhuma avaliação encontrada
               </h3>
               <p className="text-sm text-neutral-500 max-w-md mx-auto">
-                {searchTerm || selectedSubordinateId !== "all"
+                {searchTerm ||
+                selectedSubordinateId !== "all" ||
+                evaluatorFilter !== "all"
                   ? "Nenhuma avaliação corresponde aos filtros e termos de busca informados."
-                  : "Você ainda não realizou nenhuma avaliação de desempenho para seus liderados."}
+                  : "Ainda não existem avaliações registradas para os seus subordinados."}
               </p>
-              {(searchTerm || selectedSubordinateId !== "all") && (
+              {(searchTerm ||
+                selectedSubordinateId !== "all" ||
+                evaluatorFilter !== "all") && (
                 <button
                   type="button"
                   onClick={() => {
                     setSearchTerm("");
                     setSelectedSubordinateId("all");
+                    setEvaluatorFilter("all");
                   }}
                   className="mt-2 px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition"
                 >
@@ -421,29 +445,49 @@ export default function EvaluationsGiven() {
           <div className="space-y-4">
             {filteredAndSortedEvaluations.map((evaluation) => {
               const badge = getScoreBadge(evaluation.final_score);
-              const initials = getInitials(evaluation.evaluated?.name);
+              const evaluatedInitials = getInitials(evaluation.evaluated?.name);
+              const isMadeByMe = user?.id === evaluation.evaluator_id;
 
               return (
                 <div
                   key={evaluation.id}
-                  className="bg-white rounded-xl border border-neutral-200 p-5 sm:p-6 shadow-sm hover:shadow-md transition duration-150 space-y-4"
+                  onClick={() => setActiveModalEvaluation(evaluation)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setActiveModalEvaluation(evaluation);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  className="bg-white rounded-xl border border-neutral-200 p-5 sm:p-6 shadow-sm hover:shadow-md hover:border-indigo-300 transition duration-150 space-y-4 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
-                  {/* Card Header: Colaborador e Nota Final */}
+                  {/* Card Header: Colaborador Avaliado, Avaliador e Nota Final */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-linear-to-br from-indigo-500 to-indigo-700 text-white font-bold flex items-center justify-center text-base shadow-sm shrink-0">
-                        {initials}
+                        {evaluatedInitials}
                       </div>
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <h2 className="text-base sm:text-lg font-semibold text-neutral-900">
                             {evaluation.evaluated?.name ||
-                              `Liderado #${evaluation.evaluated_id}`}
+                              `Subordinado #${evaluation.evaluated_id}`}
                           </h2>
                           <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-700 font-medium">
                             {evaluation.evaluated?.position_name ||
                               "Colaborador"}
                           </span>
+                          {isMadeByMe ? (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-medium border border-indigo-100">
+                              Feita por você
+                            </span>
+                          ) : (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 font-medium border border-purple-100">
+                              Avaliador:{" "}
+                              {evaluation.evaluator?.name || "Outro líder"}
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs text-neutral-500 mt-0.5">
                           {evaluation.evaluated?.email} &bull; Avaliado em{" "}
@@ -472,68 +516,17 @@ export default function EvaluationsGiven() {
                     </div>
                   </div>
 
-                  {/* Resumo das Notas dos Critérios */}
-                  <div className="pt-2 border-t border-neutral-100">
-                    <p className="text-xs font-medium text-neutral-500 mb-2">
-                      Detalhamento dos Critérios (Escala de 1 a 4):
-                    </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-                      {CRITERIA_DEFINITIONS.map((crit) => {
-                        const score = evaluation[crit.field];
-                        return (
-                          <div
-                            key={crit.key}
-                            className="bg-neutral-50 p-2.5 rounded-lg border border-neutral-100 space-y-1"
-                          >
-                            <div className="flex justify-between items-center">
-                              <span
-                                className="text-[11px] font-medium text-neutral-600 truncate mr-1"
-                                title={crit.title}
-                              >
-                                {crit.title}
-                              </span>
-                              <span className="text-xs font-bold text-neutral-900">
-                                {score}/4
-                              </span>
-                            </div>
-                            {/* Barra de progresso visual */}
-                            <div className="w-full bg-neutral-200 h-1.5 rounded-full overflow-hidden">
-                              <div
-                                className={`h-full ${score >= 3 ? "bg-indigo-600" : score === 2 ? "bg-amber-500" : "bg-red-500"}`}
-                                style={{ width: `${(score / 4) * 100}%` }}
-                              />
-                            </div>
-                            <p className="text-[10px] text-neutral-400 text-right">
-                              Peso {crit.weight}%
-                            </p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
                   {/* Comentário / Feedback se houver */}
                   {evaluation.comments && (
                     <div className="bg-neutral-50 border-l-4 border-indigo-500 p-3 rounded-r-lg text-xs text-neutral-700">
                       <p className="font-semibold text-neutral-800 mb-0.5">
-                        Feedback Registrado:
+                        Comentário
                       </p>
                       <p className="italic leading-relaxed whitespace-pre-line">
                         "{evaluation.comments}"
                       </p>
                     </div>
                   )}
-
-                  {/* Ações do Card */}
-                  <div className="flex items-center justify-end pt-1">
-                    <button
-                      type="button"
-                      onClick={() => setActiveModalEvaluation(evaluation)}
-                      className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline transition flex items-center gap-1 cursor-pointer"
-                    >
-                      Ver detalhes e justificativas &rarr;
-                    </button>
-                  </div>
                 </div>
               );
             })}
@@ -559,13 +552,17 @@ export default function EvaluationsGiven() {
                 </span>
                 <h3 className="text-xl font-bold text-neutral-900 mt-1">
                   {activeModalEvaluation.evaluated?.name ||
-                    `Liderado #${activeModalEvaluation.evaluated_id}`}
+                    `Subordinado #${activeModalEvaluation.evaluated_id}`}
                 </h3>
                 <p className="text-xs text-neutral-500 mt-0.5">
                   Cargo:{" "}
                   {activeModalEvaluation.evaluated?.position_name ||
                     "Colaborador"}{" "}
                   &bull; Data: {formatDate(activeModalEvaluation.created_at)}
+                </p>
+                <p className="text-xs text-indigo-600 font-medium mt-1">
+                  Avaliador: {activeModalEvaluation.evaluator?.name || "Líder"}{" "}
+                  ({activeModalEvaluation.evaluator?.position_name || "Gestão"})
                 </p>
               </div>
 
@@ -623,16 +620,18 @@ export default function EvaluationsGiven() {
                             Peso no cálculo final: {crit.weight}%
                           </p>
                         </div>
-                        <div className="text-right">
-                          <span className="text-base font-bold text-indigo-700">
+                        <div className="text-right flex items-baseline gap-1">
+                          <span className="text-xl font-black text-indigo-600">
                             {score}
                           </span>
-                          <span className="text-xs text-neutral-400"> / 4</span>
+                          <span className="text-sm font-semibold text-neutral-400">
+                            / 4
+                          </span>
                         </div>
                       </div>
 
-                      {/* Barra de Progresso */}
-                      <div className="w-full bg-neutral-100 h-2 rounded-full overflow-hidden">
+                      {/* Barra de Progresso Azul */}
+                      <div className="w-full bg-neutral-100 h-2.5 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-indigo-600 transition-all duration-300"
                           style={{ width: `${(score / 4) * 100}%` }}

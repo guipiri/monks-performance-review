@@ -31,9 +31,9 @@ function Home() {
 
         {/* Seção de Atalhos Rápidos */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Card: Avaliações que eu fiz */}
+          {/* Card: Avaliações */}
           <Link
-            to={routes.evaluationsGiven.path}
+            to={routes.evaluations.path}
             className="group block bg-white p-6 rounded-xl border border-neutral-200 shadow-sm hover:shadow-md hover:border-indigo-300 transition duration-150"
           >
             <div className="flex items-start justify-between">
@@ -45,12 +45,13 @@ function Home() {
               </span>
             </div>
             <h2 className="text-lg font-semibold text-neutral-900 mt-4 group-hover:text-indigo-600 transition-colors">
-              Avaliações que eu fiz
+              Avaliações
             </h2>
             <p className="text-sm text-neutral-600 mt-1">
-              Visualize o histórico de avaliações de desempenho enviadas por você aos seus liderados, com notas e feedbacks detalhados.
+              Visualize todas as avaliações de desempenho dos seus subordinados diretos e indiretos, feitas por você ou por outros líderes.
             </p>
           </Link>
+
         </div>
       </div>
     </div>

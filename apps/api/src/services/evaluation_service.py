@@ -193,24 +193,54 @@ def get_evaluation_by_id(db: Session, evaluation_id: int) -> Optional[Evaluation
     return db.execute(stmt).scalar_one_or_none()
 
 
-def get_evaluations_by_leader(
-    db: Session, leader_id: int, evaluated_id: Optional[int] = None
+def get_evaluations_for_user_hierarchy(
+    db: Session,
+    user_id: int,
+    evaluated_id: Optional[int] = None,
+    evaluator_id: Optional[int] = None,
 ) -> list[Evaluation]:
     """
-    Lista as avaliações feitas por um líder.
+    Retorna todas as avaliações feitas para os subordinados (diretos e indiretos) do usuário,
+    feitas por ele ou por outros líderes, além de avaliações onde o próprio usuário foi avaliador.
     """
+    subordinates_map = get_hierarchy_subordinates_map(db, leader_id=user_id)
+    subordinate_ids = set(subordinates_map.keys())
+
     stmt = (
         select(Evaluation)
         .options(
             joinedload(Evaluation.evaluator),
             joinedload(Evaluation.evaluated),
         )
-        .where(Evaluation.evaluator_id == leader_id)
     )
+
+    if subordinate_ids:
+        condition = (Evaluation.evaluated_id.in_(subordinate_ids)) | (
+            Evaluation.evaluator_id == user_id
+        )
+    else:
+        condition = Evaluation.evaluator_id == user_id
+
+    stmt = stmt.where(condition)
+
     if evaluated_id:
         stmt = stmt.where(Evaluation.evaluated_id == evaluated_id)
+    if evaluator_id:
+        stmt = stmt.where(Evaluation.evaluator_id == evaluator_id)
+
     stmt = stmt.order_by(desc(Evaluation.created_at))
     return list(db.execute(stmt).scalars().all())
+
+
+def get_evaluations_by_leader(
+    db: Session, leader_id: int, evaluated_id: Optional[int] = None
+) -> list[Evaluation]:
+    """
+    Lista as avaliações feitas por um líder.
+    """
+    return get_evaluations_for_user_hierarchy(
+        db, user_id=leader_id, evaluated_id=evaluated_id
+    )
 
 
 def get_subordinates_list_with_status(db: Session, leader_id: int) -> list[dict]:
