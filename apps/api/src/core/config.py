@@ -1,3 +1,6 @@
+from typing import Union
+
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -14,6 +17,18 @@ class Settings(BaseSettings):
     DATABASE_URL: str = (
         "postgresql+psycopg://admin:admin@localhost:5432/monks-performance-review"
     )
+
+    # CORS
+    BACKEND_CORS_ORIGINS: Union[list[str], str] = ["http://localhost:5173"]
+
+    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    @classmethod
+    def assemble_cors_origins(cls, v: Union[str, list[str]]) -> list[str]:
+        if isinstance(v, str) and not v.startswith("["):
+            return [i.strip() for i in v.split(",") if i.strip()]
+        if isinstance(v, (list, str)):
+            return v
+        raise ValueError(v)
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

@@ -1,23 +1,24 @@
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from typing import Optional
 
 from src.core.security import verify_password
 from src.models.user import User
+from src.repositories.user_repository import UserRepository
 
 
-def get_user_by_id(db: Session, user_id: int) -> User | None:
-    return db.get(User, user_id)
+class UserService:
+    def __init__(self, user_repo: UserRepository):
+        self.user_repo = user_repo
 
+    def get_user_by_id(self, user_id: int) -> Optional[User]:
+        return self.user_repo.get_by_id(user_id)
 
-def get_user_by_email(db: Session, email: str) -> User | None:
-    stmt = select(User).where(User.email == email)
-    return db.scalars(stmt).first()
+    def get_user_by_email(self, email: str) -> Optional[User]:
+        return self.user_repo.get_by_email(email)
 
-
-def authenticate_user(db: Session, email: str, password: str) -> User | None:
-    user = get_user_by_email(db, email=email)
-    if not user:
-        return None
-    if not verify_password(password, user.hashed_password):
-        return None
-    return user
+    def authenticate_user(self, email: str, password: str) -> Optional[User]:
+        user = self.user_repo.get_by_email(email=email)
+        if not user:
+            return None
+        if not verify_password(password, user.hashed_password):
+            return None
+        return user
