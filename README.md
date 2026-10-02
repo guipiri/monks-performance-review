@@ -106,23 +106,7 @@ Certifique-se de possuir instalado em seu ambiente:
 
 ## Instruções de Setup
 
-### i. Como Instalar as Dependências
-
-Na raiz do projeto, instale as dependências de todo o monorepo (Node e Python):
-
-```bash
-# 1. Instalar dependências JavaScript/TypeScript no monorepo
-yarn install
-
-# 2. Instalar dependências Python no backend (apps/api)
-cd apps/api
-uv sync
-cd ../..
-```
-
----
-
-### ii. Onde Colocar as Chaves e Variáveis de Ambiente
+### i. Onde Colocar as Chaves e Variáveis de Ambiente
 
 Localmente, não é necessário criar variáveis de ambiente pois o projeto possui configurações pré-definidas. Mas você pode customizar os arquivos `.env` caso deseje:
 
@@ -153,11 +137,32 @@ VITE_API_URL=http://localhost:8000/api/v1
 
 ---
 
-### iii. Execução Passo a Passo
+### ii. Execução Passo a Passo
 
-Siga o passo a passo abaixo para inicializar o banco de dados, aplicar as migrações, popular dados iniciais e rodar os servidores:
+Siga o passo a passo abaixo para clonar o repositório, instalar as dependências, inicializar o banco de dados, aplicar as migrações, popular dados iniciais e rodar os servidores:
 
-#### Passo 1: Iniciar o Banco de Dados (PostgreSQL)
+#### Passo 1: Clonar o Repositório
+Clone o repositório e acesse a pasta do projeto:
+
+```bash
+git clone https://github.com/guipiri/monks-performance-review.git
+cd monks-performance-review
+```
+
+#### Passo 2: Instalar as Dependências
+Na raiz do projeto, instale as dependências de todo o monorepo (Node e Python):
+
+```bash
+# 1. Instalar dependências JavaScript/TypeScript no monorepo
+yarn install
+
+# 2. Instalar dependências Python no backend (apps/api)
+cd apps/api
+uv sync
+cd ../..
+```
+
+#### Passo 3: Iniciar o Banco de Dados (PostgreSQL)
 Inicie o container PostgreSQL em segundo plano:
 
 ```bash
@@ -166,7 +171,7 @@ docker compose up -d database
 
 > O banco de dados estará acessível em `localhost:5432` com usuário `admin` e banco `monks-performance-review`.
 
-#### Passo 2: Executar as Migrações do Banco
+#### Passo 4: Executar as Migrações do Banco
 Rode as migrações via Alembic para criar todas as tabelas:
 
 ```bash
@@ -177,7 +182,7 @@ yarn --cwd apps/api db:migrate
 # cd apps/api && uv run alembic upgrade head
 ```
 
-#### Passo 3: Popular o Banco de Dados (Seeds)
+#### Passo 5: Popular o Banco de Dados (Seeds)
 Execute o script de seed para criar usuários, estrutura organizacional e relações de liderança:
 
 ```bash
@@ -188,7 +193,7 @@ yarn --cwd apps/api db:seed
 # cd apps/api && uv run python -m src.db.seeds
 ```
 
-#### Passo 4: Iniciar a Aplicação em Desenvolvimento
+#### Passo 6: Iniciar a Aplicação em Desenvolvimento
 Execute o comando de inicialização unificada na raiz do projeto:
 
 ```bash
@@ -202,7 +207,7 @@ O **Turborepo** iniciará simultaneamente:
 
 ---
 
-## 🔑 Credenciais para Teste (Seed Data)
+## Credenciais para Teste
 
 Após rodar o script `db:seed`, todos os usuários de exemplo compartilham a mesma senha padrão:
 
